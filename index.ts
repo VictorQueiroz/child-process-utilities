@@ -19,6 +19,8 @@ export function spawn(
         childProcess.on("close", (code) => {
           if (code !== 0) {
             reject(new Exception(`Process exited with code: ${code}`));
+          } else {
+            resolve();
           }
         });
       }),
