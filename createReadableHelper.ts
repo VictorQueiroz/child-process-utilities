@@ -50,6 +50,17 @@ export default function createReadableHelper(
     try {
       return JSON.parse(await utf8());
     } catch (reason) {
+      let message: string;
+      if (
+        typeof reason === "object" &&
+        reason !== null &&
+        "message" in reason &&
+        typeof reason["message"] === "string"
+      ) {
+        message = reason["message"];
+      } else {
+        message = `${reason}`;
+      }
       throw new Exception(
         `Failed to parse JSON:\n\n` +
           `${(await utf8())
@@ -57,7 +68,7 @@ export default function createReadableHelper(
             .map((line) => `\t> ${line}`)
             .join("\n")}\n` +
           `Failed with error:\n\n` +
-          `\t> ${reason}`,
+          `\t> ${message}`,
       );
     }
   };
