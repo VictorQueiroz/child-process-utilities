@@ -14,7 +14,10 @@
     "prepublishOnly": "npx tsc"
   },
   "devDependencies": {
-    "@types/node": "18.x",
-    "typescript": "5.x"
+    "@types/node": "^20.16.5",
+    "eslint": "^9.10.0",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
   }
 }

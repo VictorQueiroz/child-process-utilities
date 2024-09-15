@@ -1,4 +1,5 @@
 /node_modules
+/.history
 *.js
 *.d.ts
 tsconfig.tsbuildinfo
