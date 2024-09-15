@@ -13,6 +13,9 @@
   "scripts": {
     "prepublishOnly": "npx tsc"
   },
+  "engines": {
+    "node": ">=0.10.48"
+  },
   "devDependencies": {
     "@types/node": "^20.16.5",
     "eslint": "^9.10.0",
