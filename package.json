@@ -7,8 +7,8 @@
   "license": "MIT",
   "private": false,
   "files": [
-    "index.js",
-    "index.d.ts"
+    "**/*.js",
+    "**/*.d.ts"
   ],
   "scripts": {
     "prepublishOnly": "npx tsc"
