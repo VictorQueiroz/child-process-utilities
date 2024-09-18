@@ -8,10 +8,14 @@
   "private": false,
   "files": [
     "**/*.js",
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "!test/**"
   ],
   "scripts": {
-    "prepublishOnly": "npx tsc"
+    "build": "tsc -b . -f",
+    "test": "npm run build && node $NODE_ARGS --test test",
+    "prepublishOnly": "npm test",
+    "start": "npm run test && npm run build -- -w"
   },
   "engines": {
     "node": ">=0.10.48"

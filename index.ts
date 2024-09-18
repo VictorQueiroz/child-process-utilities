@@ -1,16 +1,34 @@
 import child_process from "child_process";
 import waitChildProcessCloseEvent from "./waitChildProcessCloseEvent";
-import createReadableHelper from "./createReadableHelper";
+import createReadableHelper, { IReadableHelper } from "./createReadableHelper";
 
 export interface IOptions extends child_process.SpawnOptions {
   log?: boolean;
+}
+
+export interface ISpawnResult {
+  /**
+   * Wait for the child process to exit. If the child process exits
+   * with a non-zero exit code, an exception will be thrown.
+   */
+  wait: () => Promise<void>;
+  childProcess: child_process.ChildProcess;
+  output: () => {
+    stdout: () => IReadableHelper
+    stderr: () => IReadableHelper
+  };
+}
+
+export interface ISpawn {
+  (command: string, args?: string[], options?: IOptions): ISpawnResult;
+  pipe: (command: string, args?: string[], options?: IOptions) => ISpawnResult;
 }
 
 export function spawn(
   command: string,
   args: string[] = [],
   options: IOptions = {},
-) {
+): ISpawnResult {
   if (options.log ?? true) {
     console.log("$ %s %s", command, args.join(" "));
   }
@@ -20,10 +38,6 @@ export function spawn(
   });
   const wait = () => waitChildProcessCloseEvent(childProcess);
   return {
-    /**
-     * Wait for the child process to exit. If the child process exits
-     * with a non-zero exit code, an exception will be thrown.
-     */
     wait,
     /**
      * Original Node.js @type {child_process.ChildProcess} instance that was spawned.
@@ -37,8 +51,16 @@ export function spawn(
      * stream from the child process.
      */
     output: () => ({
-      stdout: createReadableHelper(childProcess, "stdout"),
-      stderr: createReadableHelper(childProcess, "stderr"),
+      stdout: () => createReadableHelper(childProcess, "stdout"),
+      stderr: () => createReadableHelper(childProcess, "stderr"),
     }),
   };
+}
+
+spawn.pipe = function(
+  command: string,
+  args: string[] = [],
+  options: IOptions = {}
+) {
+  return spawn(command, args, {...options, stdio: 'pipe'});
 }

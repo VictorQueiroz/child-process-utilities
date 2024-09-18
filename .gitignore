@@ -4,3 +4,5 @@
 *.d.ts
 tsconfig.tsbuildinfo
 /*.tgz
+*.d.ts
+*.map

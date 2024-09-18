@@ -27,8 +27,8 @@ import { spawn } from "child-process-utilities";
 
 export default async function () {
   const { stdout, stderr } = await spawn("npx", ["ts-node", "src"]).output();
-  console.log(stdout.utf8()); // Returns a string
-  console.error(stderr.utf8()); // Returns a string
+  console.log(await stdout().decode('UTF-8')); // Returns a string
+  console.error(await stderr().decode('UTF-8')); // Returns a string
 }
 ```
 
@@ -39,8 +39,8 @@ import { spawn } from "child-process-utilities";
 
 export default async function () {
   const { stdout, stderr } = await spawn("npx", ["ts-node", "src"]).output();
-  console.log(stdout.raw()); // Returns an Uint8Array
-  console.error(stderr.raw()); // Returns an Uint8Array
+  console.log(await stdout().raw()); // Returns an Uint8Array
+  console.error(await stderr().raw()); // Returns an Uint8Array
 }
 ```
 
@@ -51,7 +51,7 @@ import { spawn } from "child-process-utilities";
 
 export default async function () {
   const { stdout, stderr } = await spawn("npx", ["ts-node", "src"]).output();
-  console.log(stdout.json()); // Parses the stdout as JSON
-  console.error(stderr.json()); // Parses the stderr as JSON
+  console.log(await stdout().json()); // Parses the stdout as JSON
+  console.error(await stderr().json()); // Parses the stderr as JSON
 }
 ```
