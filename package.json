@@ -18,10 +18,10 @@
     "start": "npm run test && npm run build -- -w"
   },
   "engines": {
-    "node": ">=0.10.48"
+    "node": ">=16"
   },
   "devDependencies": {
-    "@types/node": "^20.16.5",
+    "@types/node": "^20.16.6",
     "eslint": "^9.10.0",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",

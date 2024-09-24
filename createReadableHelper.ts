@@ -3,11 +3,23 @@ import Exception from "./Exception";
 import child_process from "child_process";
 import errorToString from "./errorToString";
 import createSerializer from "./createSerializer";
-import assert from "assert";
 
-export interface IReadableHelper {
+export interface IReadableHelperOptionTypes {
+  json: unknown;
+}
+
+type ReadableHelperOptionValue<T extends IReadableHelperOptionTypes> =
+  T extends {
+    json: infer U;
+  }
+    ? U
+    : never;
+
+export interface IReadableHelper<
+  T extends IReadableHelperOptionTypes = IReadableHelperOptionTypes,
+> {
   raw: () => Promise<Uint8Array>;
-  json<T = unknown>(): Promise<T>;
+  json<R = ReadableHelperOptionValue<T>>(): Promise<R>;
   decode: (encoding?: string) => Promise<string>;
   split: (delimiter: string) => AsyncIterableIterator<string>;
 }
@@ -27,30 +39,30 @@ export default function createReadableHelper(
   /**
    * This promise will be resolved when the chunks have been concatenated.
    */
-  const raw = (async function () {
+  const raw = async function () {
     // Reset the serializer
     serializer.rewind();
 
-    for await(const chunk of readable) {
+    for await (const chunk of readable) {
       serializer.write(chunk);
     }
 
     return serializer.view();
-  })();
+  };
 
   /**
    * Decode the entire output to a string. Defaults to UTF-8.
    * @param encoding Encoding to use (see [4. Encodings](https://encoding.spec.whatwg.org/#encodings))
    * @returns {Promise<string>} Decoded string
    */
-  const decode = async function(encoding: string = 'UTF-8'): Promise<string> {
-    return new TextDecoder(encoding).decode(await raw);
+  const decode = async function (encoding: string = "UTF-8"): Promise<string> {
+    return new TextDecoder(encoding).decode(await raw());
   };
 
   const json = async <T = unknown>(): Promise<T> => {
     try {
-      console.log(await decode('UTF-8'))
-      return JSON.parse(await decode('UTF-8'));
+      const decoded = await decode("UTF-8");
+      return JSON.parse(decoded);
     } catch (reason) {
       const message = errorToString(reason);
       throw new Exception(
@@ -67,16 +79,18 @@ export default function createReadableHelper(
 
   const split = async function* (delimiter: string): AsyncGenerator<string> {
     const decoder = new TextDecoder();
-    let buffer = '';
-  
+    let buffer = "";
+
     for await (const chunk of readable) {
       if (!Buffer.isBuffer(chunk)) {
-        throw new Exception(`Received a non-buffer chunk: ${chunk} (type: ${typeof chunk})`);
+        throw new Exception(
+          `Received a non-buffer chunk: ${chunk} (type: ${typeof chunk})`,
+        );
       }
-  
+
       // Decode the chunk and append it to the buffer
       buffer += decoder.decode(chunk, { stream: true });
-  
+
       let delimiterIndex;
       // Look for the delimiter in the buffer
       while ((delimiterIndex = buffer.indexOf(delimiter)) >= 0) {
@@ -88,17 +102,17 @@ export default function createReadableHelper(
         buffer = buffer.slice(delimiterIndex + delimiter.length);
       }
     }
-  
+
     // Handle any remaining data in the buffer
     if (buffer.length > 0) {
       yield buffer;
     }
   };
-  
+
   return {
     split,
     json,
     decode,
-    raw: () => raw
+    raw,
   };
 }
