@@ -11,6 +11,10 @@
     "**/*.d.ts",
     "!test/**"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorcqueiroz/child-process-utilities.git"
+  },
   "scripts": {
     "build": "tsc -b . -f",
     "test": "npm run build && node $NODE_ARGS --test test",
