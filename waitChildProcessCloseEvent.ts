@@ -12,5 +12,9 @@ export default function waitChildProcessCloseEvent(
         resolve();
       }
     });
+
+    childProcess.on("error", (error) => {
+      reject(error);
+    });
   });
 }
