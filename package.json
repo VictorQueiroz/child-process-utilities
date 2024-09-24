@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/victorcqueiroz/child-process-utilities.git"
+    "url": "git+https://github.com/VictorQueiroz/child-process-utilities.git"
   },
   "scripts": {
     "build": "tsc -b . -f",
