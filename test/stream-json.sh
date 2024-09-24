@@ -1,24 +1,46 @@
-#!/bin/sh
+#!/bin/bash
 
-echo '{';
+lazy_printf() {
+  # Forward all arguments of the function to `printf` correctly
+  printf "$@"
+  sleep 0.001
+}
 
-for i in 1 2 3 4 5
+lazy_printf '%s\n' '{';
+
+max_values=20
+array_values=(10 20 30 40 50 60 70 80 90 100 true false '"xxx"' '"yyy"' '"zzz"')
+array_values_length=${#array_values[@]}
+
+for i in $(seq 0 $max_values);
 do
-  echo -n " \"value_$i\": [";
-  for j in 10 20 30 40 50
+  lazy_printf "  \"%s\": [" "value_$i"
+
+  # Loop through the array values
+  for j in $(seq 0 $((array_values_length - 1)));
   do
-    echo -n "$j"
+    last_index=$((array_values_length - 1))
+    current_value="${array_values[$j]}"
+    lazy_printf "%s" "$current_value"
+
+    # printf "\n\n%s != %s\n\n" "$current_value" "${array_values[$((array_values_length - 1))]}"
+
     # Only print the last comma if it's not the last value
-    if [ $j -ne 50 ]; then
-      echo -n ', '
+    if [ "$j" -ne $last_index ]; then
+      lazy_printf '%s ' ','
+      # printf "\n\n%s != %s\n" "$j" $((array_values_length - 1))
     fi
+
+    # Decrease array_values_length by 1
+    # array_values_length=$((array_values_length - 1))
   done
-  echo -n ']'
+  lazy_printf '%s' ']'
   # Only print the last comma if it's not the last value
-  if [ $i -ne 5 ]; then
-    echo ','
+  if [ "$i" -ne "${max_values}" ]; then
+    lazy_printf ','
   fi
+  # Print end-of-array line
+  lazy_printf '\n'
 done
 
-echo
-echo '}';
+lazy_printf '}';
