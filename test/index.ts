@@ -1,4 +1,4 @@
-import { describe, it } from "node:test";
+import test, { describe, it } from "node:test";
 import { spawn } from "..";
 import path from "node:path";
 import assert from "node:assert";
@@ -49,8 +49,58 @@ describe("spawn", () => {
       });
     });
   });
+
   describe("output", () => {
     describe("stdout", () => {
+      it("should be an async iterator", async () => {
+        const items = [
+          "apple",
+          "banana",
+          "cherry",
+          "date",
+          "eggfruit",
+          "fig",
+          "grape",
+          "honeydew",
+          "kiwi",
+          "lemon",
+          "lime",
+          "mango",
+          "nectarine",
+          "orange",
+          "peach",
+          "pear",
+          "pineapple",
+          "quince",
+          "raspberry",
+          "strawberry",
+          "tangerine",
+        ];
+        const textDecoder = new TextDecoder();
+        const itemsOutput = items.join(",");
+        let offset = 0;
+        for (const duration of [".25s", "100ms", "200ms", "10ms"]) {
+          offset = 0;
+          for await (const chunk of spawn
+            .pipe(path.resolve(__dirname, "sleeping-stream.sh"), [...items], {
+              env: {
+                ...process.env,
+                DURATION: duration,
+              },
+            })
+            .output()
+            .stdout()) {
+            const item = textDecoder.decode(chunk);
+
+            assert.strict.equal(
+              itemsOutput.substring(offset, offset + item.length),
+              item,
+            );
+            offset += item.length;
+          }
+        }
+      });
+
       describe("json", () => {
         it("should decode stream as a JSON object", async (t) => {
           t.assert.deepEqual(

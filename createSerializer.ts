@@ -1,4 +1,3 @@
-
 export interface ISerializer {
   /**
    * Get the view of the buffer
@@ -19,7 +18,6 @@ export interface ISerializer {
   rewind: (length?: number) => void;
 }
 
-
 /**
  * Create a serializer that can be used to write chunks of data to an
  * ArrayBuffer and rewind to a previous position.
@@ -34,9 +32,8 @@ export interface ISerializer {
  *
  * @returns {ISerializer} An object with the methods described above
  */
-export default function createSerializer(): ISerializer {
-  // Create an initial buffer of 65,536 bytes
-  let initialSize = 256 * 256 * 1;
+const createSerializer: ICreateSerializer = function (): ISerializer {
+  const initialSize = createSerializer.initialSize ?? 256 * 256 * 1;
   let offset = 0;
   let buffer = new ArrayBuffer(initialSize);
   let view = new Uint8Array(buffer, 0, offset);
@@ -46,7 +43,9 @@ export default function createSerializer(): ISerializer {
     // If we don't have enough space in the buffer, we need to resize it
     if (remaining < chunk.byteLength) {
       // Create a new buffer with twice the size
-      const newBuffer = new ArrayBuffer(buffer.byteLength + (initialSize * 2) + chunk.byteLength);
+      const newBuffer = new ArrayBuffer(
+        buffer.byteLength + initialSize * 2 + chunk.byteLength,
+      );
       const newView = new Uint8Array(newBuffer, 0, offset + chunk.byteLength);
 
       // Move the old memory to the new buffer
@@ -72,5 +71,17 @@ export default function createSerializer(): ISerializer {
     view: () => new Uint8Array(buffer, 0, offset),
     rewind,
     write,
-  }
+  };
+};
+
+export interface ICreateSerializer {
+  (): ISerializer;
+  /**
+   * Initial size of the serializer. Defaults to 256 * 256 * 1
+   */
+  initialSize: number | null;
 }
+
+createSerializer.initialSize = 256 * 256 * 1;
+
+export default createSerializer;

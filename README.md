@@ -10,6 +10,52 @@ npm i child-process-utilities
 
 ## Usage
 
+### Iterate over the output streams of a process using async iterators
+
+This method does not use any sort of buffering. Which means that we do not cache the entire output into memory.
+
+#### `stdout`/`stderr`
+
+The values returned by `stdout` and `stderr` can be iterated directly by default.
+
+```ts
+import { spawn } from "child-process-utilities";
+
+const childProcess = spawn(/* ... */, /* ... */, /* ... */);
+
+for await (const chunk of childProcess.output().stdout()) {
+  //             ^ Uint8Array
+  console.log("Chunk: %s", chunk);
+}
+```
+
+#### `split`
+
+In the example below, the output is streamed line by line, since we're using the `\n` character, but any other character can be passed to `split`.
+
+```ts
+import { spawn } from "child-process-utilities";
+
+const lines = spawn
+  .pipe(bin.curl, ["-L", project.license.url])
+  .output()
+  .stdout()
+  .split("\n"); // Returns an AsyncIterableIterator<string>
+for await (const line of lines) {
+  console.log("This is a line: %s", line);
+}
+
+// Or
+const chunks = spawn
+  .pipe(bin.curl, ["-L", project.license.url])
+  .output()
+  .stdout(); // `IReadableHelper` is an async iterator by itself
+for await (const chunk of chunks) {
+  //             ^ Uint8Array
+  console.log("Chunk: %s", line);
+}
+```
+
 **Please note that for performance reasons any decisive output functions can only be called once.**
 
 ```ts

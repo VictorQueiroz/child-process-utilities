@@ -6,3 +6,6 @@ tsconfig.tsbuildinfo
 /*.tgz
 *.d.ts
 *.map
+/coverage
+/.rollup.cache
+/dist

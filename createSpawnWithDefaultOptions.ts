@@ -1,7 +1,9 @@
+import createChildProcessReadableNullishStreamException from "./createChildProcessReadableNullishStreamException";
 import createReadableHelper, {
   IReadableHelper,
   IReadableHelperOptionTypes,
 } from "./createReadableHelper";
+import nonNullableOrException from "./nonNullableOrException";
 import waitChildProcessCloseEvent from "./waitChildProcessCloseEvent";
 import child_process from "child_process";
 
@@ -16,6 +18,13 @@ export interface ISpawnResult<T extends IReadableHelperOptionTypes> {
    */
   wait: () => Promise<void>;
   childProcess: child_process.ChildProcess;
+  /**
+   * Get the output streams of the child process.
+   *
+   * @returns An object with two properties: `stdout` and `stderr`.
+   * Each property is a `ReadableStream` that outputs the corresponding
+   * stream from the child process.
+   */
   output: () => {
     stdout: () => IReadableHelper<T>;
     stderr: () => IReadableHelper<T>;
@@ -41,11 +50,9 @@ export interface ISpawn<
  *   - `output`: A function that returns an object with two properties: `stdout` and `stderr`.
  *     Each property is a function that returns a @type {IReadableHelper} that acts as an interface to the readable stream.
  */
-const createSpawnWithDefaultOptions: <
+export default function createSpawnWithDefaultOptions<
   T extends IReadableHelperOptionTypes = IReadableHelperOptionTypes,
->(
-  defaultOptions: IOptions,
-) => ISpawn<T> = (defaultOptions) => {
+>(defaultOptions: IOptions): ISpawn<T> {
   function spawnChildProcess(
     command: string,
     args: string[] = [],
@@ -60,6 +67,20 @@ const createSpawnWithDefaultOptions: <
     };
     const childProcess = child_process.spawn(command, args, options);
     const wait = () => waitChildProcessCloseEvent(childProcess);
+    const output = () => ({
+      stdout: () =>
+        nonNullableOrException(
+          childProcess.stdout,
+          createReadableHelper,
+          createChildProcessReadableNullishStreamException("stdout"),
+        ),
+      stderr: () =>
+        nonNullableOrException(
+          childProcess.stderr,
+          createReadableHelper,
+          createChildProcessReadableNullishStreamException("stderr"),
+        ),
+    });
     return {
       options,
       wait,
@@ -67,23 +88,11 @@ const createSpawnWithDefaultOptions: <
        * Original Node.js @type {child_process.ChildProcess} instance that was spawned.
        */
       childProcess,
-      /**
-       * Get the output streams of the child process.
-       *
-       * @returns An object with two properties: `stdout` and `stderr`.
-       * Each property is a `ReadableStream` that outputs the corresponding
-       * stream from the child process.
-       */
-      output: () => ({
-        stdout: () => createReadableHelper(childProcess, "stdout"),
-        stderr: () => createReadableHelper(childProcess, "stderr"),
-      }),
+      output,
     };
   }
 
   spawnChildProcess.defaultOptions = defaultOptions;
 
   return spawnChildProcess;
-};
-
-export default createSpawnWithDefaultOptions;
+}

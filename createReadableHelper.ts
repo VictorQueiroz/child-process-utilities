@@ -1,13 +1,20 @@
 import { TextDecoder } from "util";
 import Exception from "./Exception";
-import child_process from "child_process";
 import errorToString from "./errorToString";
 import createSerializer from "./createSerializer";
+import { Readable } from "stream";
 
+/**
+ * Interface representing the option types for `IReadableHelper`.
+ * This can be extended to customize the expected return type for the `json()` method.
+ */
 export interface IReadableHelperOptionTypes {
   json: unknown;
 }
 
+/**
+ * Utility type to extract the type of the `json` property from `IReadableHelperOptionTypes`.
+ */
 type ReadableHelperOptionValue<T extends IReadableHelperOptionTypes> =
   T extends {
     json: infer U;
@@ -15,29 +22,66 @@ type ReadableHelperOptionValue<T extends IReadableHelperOptionTypes> =
     ? U
     : never;
 
+/**
+ * Helper interface for processing a `Readable` stream.
+ * Provides methods to read, decode, parse, and iterate over the data from the stream.
+ * @template T Option types to customize the helper behavior, such as the expected JSON type.
+ */
 export interface IReadableHelper<
   T extends IReadableHelperOptionTypes = IReadableHelperOptionTypes,
 > {
+  /**
+   * Reads the entire stream and returns the concatenated data as a `Uint8Array`.
+   * **Note**: This method caches the entire output in memory, but does so efficiently
+   * using a dynamic-memory serializer.
+   * @returns {Promise<Uint8Array>} A promise that resolves to the raw data from the stream.
+   */
   raw: () => Promise<Uint8Array>;
-  json<R = ReadableHelperOptionValue<T>>(): Promise<R>;
+  /**
+   * Reads and decodes the stream data into a string using the specified encoding.
+   * @param {string} [encoding='UTF-8'] The encoding to use for decoding the data.
+   * @returns {Promise<string>} A promise that resolves to the decoded string.
+   */
   decode: (encoding?: string) => Promise<string>;
+  /**
+   * Reads and parses the stream data as JSON.
+   * @template T The expected return type after parsing JSON.
+   * @returns {Promise<T>} A promise that resolves to the parsed JSON object.
+   * @throws {Exception} Throws an exception if parsing fails, including the error message and the data.
+   */
+  json<R = ReadableHelperOptionValue<T>>(): Promise<R>;
+  /**
+   * Async generator function that splits the stream data using a delimiter and yields each part.
+   * This function processes data chunk by chunk without caching the entire stream in memory.
+   * @param {string} delimiter The delimiter to split the data on.
+   * @returns {AsyncGenerator<string>} An async generator yielding each split string.
+   * @throws {Exception} Throws an exception if a non-buffer chunk is encountered.
+   */
   split: (delimiter: string) => AsyncIterableIterator<string>;
+  /**
+   * Async iterator over the data chunks from the stream, yielding `Uint8Array` chunks.
+   * @returns {AsyncIterableIterator<Uint8Array>} An async iterator over the data chunks.
+   * @throws {Exception} Throws an exception if a non-buffer chunk is encountered.
+   */
+  [Symbol.asyncIterator](): AsyncIterableIterator<Uint8Array>;
 }
 
+/**
+ * Creates a helper object for a given `Readable` stream.
+ * Provides utility methods to read, decode, parse, and iterate over the stream data.
+ * @param {Readable | null} readable The `Readable` stream to process.
+ * @returns {IReadableHelper} An object implementing the `IReadableHelper` interface.
+ * @throws {Exception} Throws an exception if the `readable` argument is `null`.
+ */
 export default function createReadableHelper(
-  childProcess: child_process.ChildProcess,
-  stdio: "stdout" | "stderr",
+  readable: Readable,
 ): IReadableHelper {
-  const readable = childProcess[stdio] ?? null;
-
-  if (readable === null) {
-    throw new Exception(`No ${stdio} stream`);
-  }
-
   const serializer = createSerializer();
 
   /**
    * This promise will be resolved when the chunks have been concatenated.
+   * This method caches the entire output in memory, but it does so in an
+   * intelligent way, by using a dynamic-memory serializer.
    */
   const raw = async function () {
     // Reset the serializer
@@ -110,6 +154,18 @@ export default function createReadableHelper(
   };
 
   return {
+    [Symbol.asyncIterator]: async function* () {
+      for await (const chunk of readable) {
+        if (!Buffer.isBuffer(chunk)) {
+          throw new Exception(
+            `Received a non-buffer chunk: ${chunk} (type: ${typeof chunk}). ` +
+              "This method is supposed to return a buffer. Maybe you changed the stream encoding? " +
+              "See: https://nodejs.org/api/stream.html#readablesetencodingencoding",
+          );
+        }
+        yield new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+      }
+    },
     split,
     json,
     decode,
