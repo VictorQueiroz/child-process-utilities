@@ -69,6 +69,14 @@ export default function createSpawnWithDefaultOptions<
       ...defaultOptions,
       ...options,
     };
+
+    /**
+     * Inherit `stderr` descriptor by default to avoid missing errors.
+     */
+    if(typeof options.stdio === 'string') {
+      options.stdio = ['pipe', options.stdio, 'inherit'];
+    }
+
     const childProcess = child_process.spawn(command, args, options);
     const wait = () => waitChildProcessCloseEvent(childProcess);
     const output = () => ({
