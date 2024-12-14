@@ -1,5 +1,5 @@
 {
-  "name": "child-process-utilities",
+  "name": "@high-nodejs/child_process",
   "version": "0.1.8",
   "description": "Utilities to deal with child_process native Node.js package.",
   "main": "./index.js",
