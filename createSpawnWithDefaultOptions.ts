@@ -8,6 +8,10 @@ import waitChildProcessCloseEvent from "./waitChildProcessCloseEvent";
 import child_process from "child_process";
 
 export interface IOptions extends child_process.SpawnOptions {
+  /**
+   * If true, it will log the entire command on the terminal before
+   * spawning the process.
+   */
   log?: boolean;
 }
 
