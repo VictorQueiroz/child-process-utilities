@@ -1,6 +1,6 @@
 {
   "name": "@high-nodejs/child_process",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "Utilities to deal with child_process native Node.js package.",
   "main": "./index.js",
   "author": "Victor Queiroz <victorcqueirozg@gmail.com>",
