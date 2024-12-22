@@ -121,7 +121,7 @@ export default function createReadableHelper(
     }
   };
 
-  const split = async function* (delimiter: string): AsyncGenerator<string> {
+  const split = async function* (delimiter: string): AsyncIterableIterator<string> {
     const decoder = new TextDecoder();
     let buffer = "";
 
@@ -153,19 +153,21 @@ export default function createReadableHelper(
     }
   };
 
-  return {
-    [Symbol.asyncIterator]: async function* () {
-      for await (const chunk of readable) {
-        if (!Buffer.isBuffer(chunk)) {
-          throw new Exception(
-            `Received a non-buffer chunk: ${chunk} (type: ${typeof chunk}). ` +
-              "This method is supposed to return a buffer. Maybe you changed the stream encoding? " +
-              "See: https://nodejs.org/api/stream.html#readablesetencodingencoding",
-          );
-        }
-        yield new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+  async function* asyncIterator () {
+    for await (const chunk of readable) {
+      if (!Buffer.isBuffer(chunk)) {
+        throw new Exception(
+          `Received a non-buffer chunk: ${chunk} (type: ${typeof chunk}). ` +
+            "This method is supposed to return a buffer. Maybe you changed the stream encoding? " +
+            "See: https://nodejs.org/api/stream.html#readablesetencodingencoding",
+        );
       }
-    },
+      yield new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+    }
+  }
+
+  return {
+    [Symbol.asyncIterator]: asyncIterator,
     split,
     json,
     decode,
