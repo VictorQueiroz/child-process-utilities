@@ -79,7 +79,7 @@ describe("spawn", () => {
         const textDecoder = new TextDecoder();
         const itemsOutput = items.join(",");
         let offset = 0;
-        for (const duration of [".25s", "100ms", "200ms", "10ms"]) {
+        for (const duration of [125,250,500].map(n => `${n/1000}s`)) {
           offset = 0;
           for await (const chunk of spawn
             .pipe(path.resolve(__dirname, "sleeping-stream.sh"), [...items], {
