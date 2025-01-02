@@ -8,9 +8,18 @@ import nonNullableOrException from "./nonNullableOrException";
 import waitChildProcessCloseEvent from "./waitChildProcessCloseEvent";
 import child_process from "child_process";
 import createWritable, {
-  CreateWritableOptions
+  CreateWritableOptions,
+  IWritable
 } from "./stream/writable/createWritable";
 import { RingBufferU8 } from "ringbud";
+
+export type SpawnCreateReadableOptions =
+  | {
+      ringBuffer: RingBufferU8;
+    }
+  | {
+      frameSize: number;
+    };
 
 export interface IOptions extends child_process.SpawnOptions {
   /**
@@ -41,6 +50,7 @@ export interface ISpawnResult<T extends IReadableOptionTypes> {
    */
   wait: () => Promise<void>;
   childProcess: child_process.ChildProcess;
+  stdin: (spawnCreateReadableOptions: SpawnCreateReadableOptions | null) => IWritable;
   /**
    * Get the output streams of the child process.
    *
@@ -124,14 +134,6 @@ export default function createSpawnWithDefaultOptions<
       return childProcess.kill(signal);
     };
 
-    type SpawnCreateReadableOptions =
-      | {
-          ringBuffer: RingBufferU8;
-        }
-      | {
-          frameSize: number;
-        };
-
     const stdin = (
       spawnCreateReadableOptions: SpawnCreateReadableOptions | null = null
     ) => {
@@ -161,7 +163,7 @@ export default function createSpawnWithDefaultOptions<
       return createWritable(writableOptions);
     };
 
-    return {
+    const result: ISpawnResult<T> = {
       options,
       stdin,
       wait,
@@ -172,6 +174,8 @@ export default function createSpawnWithDefaultOptions<
       kill,
       output
     };
+
+    return result;
   }
 
   spawnChildProcess.defaultOptions = defaultOptions;
