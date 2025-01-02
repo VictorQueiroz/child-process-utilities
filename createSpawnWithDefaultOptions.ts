@@ -50,7 +50,7 @@ export interface ISpawnResult<T extends IReadableOptionTypes> {
    */
   wait: () => Promise<void>;
   childProcess: child_process.ChildProcess;
-  stdin: (spawnCreateReadableOptions: SpawnCreateReadableOptions | null) => IWritable;
+  stdin: (spawnCreateReadableOptions?: SpawnCreateReadableOptions | null) => IWritable;
   /**
    * Get the output streams of the child process.
    *
