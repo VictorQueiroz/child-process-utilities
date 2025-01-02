@@ -44,7 +44,7 @@ const createSerializer: ICreateSerializer = function (): ISerializer {
     if (remaining < chunk.byteLength) {
       // Create a new buffer with twice the size
       const newBuffer = new ArrayBuffer(
-        buffer.byteLength + initialSize * 2 + chunk.byteLength,
+        buffer.byteLength + initialSize * 2 + chunk.byteLength
       );
       const newView = new Uint8Array(newBuffer, 0, offset + chunk.byteLength);
 
@@ -70,7 +70,7 @@ const createSerializer: ICreateSerializer = function (): ISerializer {
   return {
     view: () => new Uint8Array(buffer, 0, offset),
     rewind,
-    write,
+    write
   };
 };
 

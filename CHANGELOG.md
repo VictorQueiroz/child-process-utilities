@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+Add support for `stdin()` while featuring a solid implementation of a ring buffer that can be used to write to any writable stream diligently and efficiently.
+
 ### Changed
 
 If `options.stdio` is a string, defaults `options.stdio` to `['pipe', options.stdio, 'inherit']`.
@@ -28,4 +32,3 @@ See: https://nodejs.org/api/child_process.html#optionsstdio
 [0.0.7]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v0.0.5
-

@@ -1,12 +1,12 @@
 import createSpawnWithDefaultOptions, {
   IOptions,
-  ISpawn,
+  ISpawn
 } from "./createSpawnWithDefaultOptions";
 
 export default function mergeOptions(dst: ISpawn, src: ISpawn): ISpawn {
   const mergedDefaultOptions: IOptions = {
     ...dst.defaultOptions,
-    ...src.defaultOptions,
+    ...src.defaultOptions
   };
 
   const spawnWithMergedDefaultOptions =

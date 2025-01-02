@@ -49,7 +49,7 @@ for await (const line of lines) {
 const chunks = spawn
   .pipe(bin.curl, ["-L", project.license.url])
   .output()
-  .stdout(); // `IReadableHelper` is an async iterator by itself
+  .stdout(); // `IReadable` is an async iterator by itself
 for await (const chunk of chunks) {
   //             ^ Uint8Array
   console.log("Chunk: %s", line);
@@ -134,7 +134,7 @@ export default async function () {
 You can pass a type to the `spawn` function to infer the return type of the `output` method. Currently, we only support defining a type for the `json` `output` property.
 
 ```ts
-// (method) IReadableHelper<{ json: number; }>.json<number>(): Promise<number>
+// (method) IReadable<{ json: number; }>.json<number>(): Promise<number>
 spawn</* Using TypeScript inline types */ { json: number }>("x")
   .output()
   .stdout()
@@ -149,15 +149,15 @@ interface IGetVideoMetadataTypes {
   json: IVideoMetadata;
 }
 
-// (method) IReadableHelper<IVideoMetadata>.json<IVideoMetadata>(): Promise<IVideoMetadata>
+// (method) IReadable<IVideoMetadata>.json<IVideoMetadata>(): Promise<IVideoMetadata>
 spawn<IGetVideoMetadataTypes>("/home/user/get-video-metadata.sh", [
-  "video.mp4" /* ... */,
+  "video.mp4" /* ... */
 ])
   .output()
   .stdout()
   .json(); // Promise<IVideoMetadata>
 
-// (method) IReadableHelper<{ json: unknown; }>.json<unknown>(): Promise<unknown>
+// (method) IReadable<{ json: unknown; }>.json<unknown>(): Promise<unknown>
 spawn("x").output().stdout().json(); // Promise<unknown>
 ```
 

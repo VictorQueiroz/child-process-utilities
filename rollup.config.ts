@@ -6,7 +6,7 @@ import typescript from "@rollup/plugin-typescript";
 export const distDir = path.resolve(__dirname, "dist");
 
 const moduleFormatList = (
-  formats: ModuleFormat[] | null = null,
+  formats: ModuleFormat[] | null = null
 ): ModuleFormat[] =>
   formats !== null
     ? formats
@@ -20,11 +20,11 @@ const moduleFormatList = (
         "commonjs",
         "esm",
         "module",
-        "systemjs",
+        "systemjs"
       ];
 
 const createConfiguration: (format: ModuleFormat) => RollupOptions = (
-  format,
+  format
 ) => {
   const outDir = path.resolve(distDir, format);
 
@@ -35,21 +35,21 @@ const createConfiguration: (format: ModuleFormat) => RollupOptions = (
         module: "ESNext",
         declarationDir: outDir,
         tsconfig: path.resolve(__dirname, "tsconfig.json"),
-        outputToFilesystem: true,
+        outputToFilesystem: true
       }),
       terser({
-        compress: {},
-      }),
+        compress: {}
+      })
     ],
     output: {
       sourcemap: true,
       dir: outDir,
-      format,
+      format
     },
-    input: path.resolve(__dirname, "index.ts"),
+    input: path.resolve(__dirname, "index.ts")
   };
 };
 
 export default defineConfig(
-  moduleFormatList(["commonjs", "esm"]).map((f) => createConfiguration(f)),
+  moduleFormatList(["commonjs", "esm"]).map((f) => createConfiguration(f))
 );

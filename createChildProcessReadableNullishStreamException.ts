@@ -10,9 +10,9 @@ import Exception from "./Exception";
  * @returns An exception that is thrown.
  */
 export default function createChildProcessReadableNullishStreamException(
-  streamName: "stderr" | "stdout",
+  streamName: "stderr" | "stdout" | "stdin"
 ) {
   return new Exception(
-    `No ${streamName} stream. Maybe you forgot to configure the \`stdio\` option? See: https://nodejs.org/api/child_process.html#optionsstdio`,
+    `No ${streamName} stream. Maybe you forgot to configure the \`stdio\` option? See: https://nodejs.org/api/child_process.html#optionsstdio`
   );
 }

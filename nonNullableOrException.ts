@@ -11,7 +11,7 @@ import Exception from "./Exception";
 export default function nonNullableOrException<T, R>(
   value: T | null,
   bake: (value: T) => R,
-  exception: Exception,
+  exception: Exception
 ): R {
   if (value === null) {
     throw exception;

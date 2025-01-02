@@ -27,7 +27,7 @@ export interface IConcatTypedArray<T extends TypedArray> {
  * @returns {IConcatTypedArray<T>}
  */
 export default function createConcatTypedArray<T extends TypedArray>(
-  ViewConstructor: TypedArrayConstructor<T>,
+  ViewConstructor: TypedArrayConstructor<T>
 ): IConcatTypedArray<T> {
   return function (...chunks) {
     const byteLength = chunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
@@ -38,7 +38,7 @@ export default function createConcatTypedArray<T extends TypedArray>(
         acc.offset += chunk.byteLength;
         return acc;
       },
-      { view, offset: 0 },
+      { view, offset: 0 }
     );
 
     return result.view;

@@ -1,24 +1,25 @@
 import { ChildProcess } from "child_process";
-import { IReadableHelperOptionTypes } from "./createReadableHelper";
+import { IReadableOptionTypes } from "./stream/readable/createReadable";
 import createSpawnWithDefaultOptions, {
   IOptions,
-  ISpawnResult,
+  ISpawnResult
 } from "./createSpawnWithDefaultOptions";
 import mergeOptions from "./mergeSpawnOptions";
+import createWritable from "./stream/writable/createWritable";
 
 const defaultSpawn = createSpawnWithDefaultOptions({
   stdio: "inherit",
-  log: true,
+  log: true
 });
 
 const silentSpawn = createSpawnWithDefaultOptions({
-  log: false,
+  log: false
 });
 
-export function silent<T extends IReadableHelperOptionTypes>(
+export function silent<T extends IReadableOptionTypes>(
   command: string,
   args: string[] = [],
-  options: IOptions = {},
+  options: IOptions = {}
 ): ISpawnResult<T> {
   return silentSpawn(command, args, options);
 }
@@ -26,7 +27,7 @@ export function silent<T extends IReadableHelperOptionTypes>(
 export function spawn<T extends { json: unknown }>(
   command: string,
   args: string[] = [],
-  options: IOptions = {},
+  options: IOptions = {}
 ): ISpawnResult<T> {
   return defaultSpawn(command, args, options);
 }
@@ -34,8 +35,8 @@ export function spawn<T extends { json: unknown }>(
 const pipeSpawn = mergeOptions(
   defaultSpawn,
   createSpawnWithDefaultOptions({
-    stdio: "pipe",
-  }),
+    stdio: "pipe"
+  })
 );
 
 /**
@@ -51,7 +52,7 @@ const pipeSpawn = mergeOptions(
 export function pipe(
   command: string,
   args: string[] = [],
-  options: IOptions = {},
+  options: IOptions = {}
 ) {
   return pipeSpawn(command, args, options);
 }
@@ -63,8 +64,8 @@ spawn.pipe = pipe;
 const waitSpawn = mergeOptions(
   defaultSpawn,
   createSpawnWithDefaultOptions({
-    stdio: "ignore",
-  }),
+    stdio: "ignore"
+  })
 );
 
 export interface IWaitOptions extends IOptions {
@@ -92,7 +93,7 @@ export interface IWaitOptions extends IOptions {
 export async function wait(
   command: string,
   args: string[] = [],
-  { noThrow = false, ...options }: IWaitOptions = {},
+  { noThrow = false, ...options }: IWaitOptions = {}
 ): Promise<ChildProcess> {
   const childProcess = waitSpawn(command, args, options);
 
@@ -112,3 +113,6 @@ export async function wait(
 }
 
 spawn.wait = wait;
+
+export { default as createWritable } from "./stream/writable/createWritable";
+export { default as createReadable } from "./stream/readable/createReadable";

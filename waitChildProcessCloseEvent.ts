@@ -3,7 +3,7 @@ import Exception from "./Exception";
 import waitStreamEvent from "./waitStreamEvent";
 
 export default function waitChildProcessCloseEvent(
-  childProcess: child_process.ChildProcess,
+  childProcess: child_process.ChildProcess
 ) {
   const closeEvent = new Promise<void>((resolve, reject) => {
     childProcess.on("close", (code) => {
@@ -23,6 +23,6 @@ export default function waitChildProcessCloseEvent(
     closeEvent,
     waitStreamEvent(childProcess.stdout, "end"),
     waitStreamEvent(childProcess.stdin, "end"),
-    waitStreamEvent(childProcess.stderr, "end"),
+    waitStreamEvent(childProcess.stderr, "end")
   ]).then(() => {});
 }

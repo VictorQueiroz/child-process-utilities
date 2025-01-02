@@ -35,18 +35,21 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.1.0",
     "@types/node": "^20.16.6",
+    "@types/sinon": "^17.0.3",
     "c8": "^10.1.2",
     "child-process-utilities": "^0.1.8",
     "cli-argument-helper": "^2.1.0",
     "eslint": "^9.10.0",
     "prettier": "^3.3.3",
     "rollup": "^4.24.0",
+    "sinon": "^19.0.2",
     "textstreamjs": "^0.0.4",
     "ts-node": "^10.9.2",
     "type-fest": "^4.26.1",
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "ringbud": "^1.0.18",
     "tslib": "^2.7.0"
   }
 }

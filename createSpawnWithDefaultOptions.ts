@@ -1,11 +1,16 @@
 import createChildProcessReadableNullishStreamException from "./createChildProcessReadableNullishStreamException";
-import createReadableHelper, {
-  IReadableHelper,
-  IReadableHelperOptionTypes,
-} from "./createReadableHelper";
+import createSerializer, { ISerializer } from "./createSerializer";
+import createReadable, {
+  IReadable,
+  IReadableOptionTypes
+} from "./stream/readable/createReadable";
 import nonNullableOrException from "./nonNullableOrException";
 import waitChildProcessCloseEvent from "./waitChildProcessCloseEvent";
 import child_process from "child_process";
+import createWritable, {
+  CreateWritableOptions
+} from "./stream/writable/createWritable";
+import { RingBufferU8 } from "ringbud";
 
 export interface IOptions extends child_process.SpawnOptions {
   /**
@@ -13,9 +18,23 @@ export interface IOptions extends child_process.SpawnOptions {
    * spawning the process.
    */
   log?: boolean;
+  /**
+   * Serializer to use when reading the output of the child process.
+   * If no serializer is provided, we will create a new serializer
+   * every new process.
+   */
+  serializer?: ISerializer;
+  /**
+   * Ring buffer
+   */
+  ringBuffer?: RingBufferU8;
+  /**
+   * Frame size
+   */
+  frameSize?: number;
 }
 
-export interface ISpawnResult<T extends IReadableHelperOptionTypes> {
+export interface ISpawnResult<T extends IReadableOptionTypes> {
   /**
    * Wait for the child process to exit. If the child process exits
    * with a non-zero exit code, an exception will be thrown.
@@ -30,15 +49,17 @@ export interface ISpawnResult<T extends IReadableHelperOptionTypes> {
    * stream from the child process.
    */
   output: () => {
-    stdout: () => IReadableHelper<T>;
-    stderr: () => IReadableHelper<T>;
+    stdout: () => IReadable<T>;
+    stderr: () => IReadable<T>;
   };
+  /**
+   * Shortcut for `ChildProcess.kill()`.
+   */
+  kill: (signal?: NodeJS.Signals | number) => boolean;
   options: IOptions;
 }
 
-export interface ISpawn<
-  T extends IReadableHelperOptionTypes = IReadableHelperOptionTypes,
-> {
+export interface ISpawn<T extends IReadableOptionTypes = IReadableOptionTypes> {
   (command: string, args?: string[], options?: IOptions): ISpawnResult<T>;
   defaultOptions: IOptions;
 }
@@ -52,59 +73,110 @@ export interface ISpawn<
  *     with a non-zero exit code, an exception will be thrown.
  *   - `childProcess`: The original Node.js @type {child_process.ChildProcess} instance that was spawned.
  *   - `output`: A function that returns an object with two properties: `stdout` and `stderr`.
- *     Each property is a function that returns a @type {IReadableHelper} that acts as an interface to the readable stream.
+ *     Each property is a function that returns a @type {IReadable} that acts as an interface to the readable stream.
  */
 export default function createSpawnWithDefaultOptions<
-  T extends IReadableHelperOptionTypes = IReadableHelperOptionTypes,
+  T extends IReadableOptionTypes = IReadableOptionTypes
 >(defaultOptions: IOptions): ISpawn<T> {
   function spawnChildProcess(
     command: string,
     args: string[] = [],
-    options: IOptions = {},
+    options: IOptions = {}
   ) {
     if (options.log) {
       console.log("$ %s %s", command, args.join(" "));
     }
     options = {
       ...defaultOptions,
-      ...options,
+      ...options
     };
 
     /**
      * Inherit `stderr` descriptor by default to avoid missing errors.
      */
-    if(typeof options.stdio === 'string') {
-      options.stdio = ['pipe', options.stdio, 'inherit'];
+    if (typeof options.stdio === "string") {
+      options.stdio = ["pipe", options.stdio, "inherit"];
     }
 
     const childProcess = child_process.spawn(command, args, options);
     const wait = () => waitChildProcessCloseEvent(childProcess);
+    const serializer = createSerializer();
     const output = () => ({
       stdout: () =>
         nonNullableOrException(
-          childProcess.stdout,
-          createReadableHelper,
-          createChildProcessReadableNullishStreamException("stdout"),
+          childProcess.stdout
+            ? { readable: childProcess.stdout, serializer }
+            : null,
+          createReadable,
+          createChildProcessReadableNullishStreamException("stdout")
         ),
       stderr: () =>
         nonNullableOrException(
-          childProcess.stderr,
-          createReadableHelper,
-          createChildProcessReadableNullishStreamException("stderr"),
-        ),
+          childProcess.stderr
+            ? { readable: childProcess.stderr, serializer }
+            : null,
+          createReadable,
+          createChildProcessReadableNullishStreamException("stderr")
+        )
     });
+
+    const kill = (signal?: NodeJS.Signals | number): boolean => {
+      return childProcess.kill(signal);
+    };
+
+    type SpawnCreateReadableOptions =
+      | {
+          ringBuffer: RingBufferU8;
+        }
+      | {
+          frameSize: number;
+        };
+
+    const stdin = (
+      spawnCreateReadableOptions: SpawnCreateReadableOptions | null = null
+    ) => {
+      const writable = childProcess.stdin;
+      if (writable === null) {
+        throw createChildProcessReadableNullishStreamException("stdin");
+      }
+      if (spawnCreateReadableOptions === null) {
+        return createWritable({
+          frameSize: options.frameSize ?? 1024,
+          writable
+        });
+      }
+      let writableOptions: CreateWritableOptions;
+      if ("ringBuffer" in spawnCreateReadableOptions) {
+        writableOptions = {
+          ringBuffer: spawnCreateReadableOptions.ringBuffer,
+          writable
+        };
+      } else {
+        writableOptions = {
+          frameSize: spawnCreateReadableOptions.frameSize,
+          writable
+        };
+      }
+
+      return createWritable(writableOptions);
+    };
+
     return {
       options,
+      stdin,
       wait,
       /**
        * Original Node.js @type {child_process.ChildProcess} instance that was spawned.
        */
       childProcess,
-      output,
+      kill,
+      output
     };
   }
 
   spawnChildProcess.defaultOptions = defaultOptions;
+
+  spawnChildProcess.createWritable = createWritable;
 
   return spawnChildProcess;
 }

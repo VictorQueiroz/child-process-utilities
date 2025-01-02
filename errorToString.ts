@@ -8,10 +8,10 @@ export default function errorToString(reason: unknown) {
     typeof reason === "object" &&
     reason !== null &&
     "message" in reason &&
-    typeof (reason)['message'] === "string"
+    typeof reason["message"] === "string"
   ) {
     // Handle objects with a message property
-    message = (reason)['message'];
+    message = reason["message"];
   } else if (typeof reason === "string" || typeof reason === "number") {
     // Handle string and number primitives
     message = `${reason}`;
@@ -27,7 +27,7 @@ export default function errorToString(reason: unknown) {
     // Perform a shallow iteration over the object's properties
     const entries = Object.entries(reason);
     if (entries.length > 0) {
-      message = entries.map(([key, value]) => `${key}: ${value}`).join(', ');
+      message = entries.map(([key, value]) => `${key}: ${value}`).join(", ");
     } else {
       message = `${reason}`;
     }

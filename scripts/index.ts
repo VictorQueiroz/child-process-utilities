@@ -14,17 +14,17 @@ import CodeStream from "textstreamjs";
   await spawn("npx", [
     "rollup",
     "-c",
-    path.resolve(__dirname, "../rollup.config.js"),
+    path.resolve(__dirname, "../rollup.config.js")
   ]).wait();
   const pkg: PackageJson = JSON.parse(
     await fs.promises.readFile(
       path.resolve(__dirname, "../package.json"),
-      "utf-8",
-    ),
+      "utf-8"
+    )
   );
 
   for (const folder of await fs.promises.readdir(
-    configuration.distribution.path,
+    configuration.distribution.path
   )) {
     const buildFolder = path.resolve(configuration.distribution.path, folder);
     const newPkg = { ...pkg, scripts: {}, files: [] };
@@ -49,7 +49,7 @@ import CodeStream from "textstreamjs";
 
     await fs.promises.writeFile(
       path.resolve(buildFolder, "package.json"),
-      JSON.stringify(newPkg, null, 2),
+      JSON.stringify(newPkg, null, 2)
     );
 
     const cs = new CodeStream();
@@ -67,12 +67,12 @@ import CodeStream from "textstreamjs";
     const assertions = [
       `typeof ${moduleImportCall}.spawn === 'function'`,
       `typeof ${moduleImportCall}.spawn.pipe === 'function'`,
-      `typeof ${moduleImportCall}.spawn.wait === 'function'`,
+      `typeof ${moduleImportCall}.spawn.wait === 'function'`
     ];
     function escape(value: string, targetCharacter: string) {
       return value.replace(
         new RegExp(`${targetCharacter}`, "gm"),
-        `\\${targetCharacter}`,
+        `\\${targetCharacter}`
       );
     }
     cs.write(
@@ -85,11 +85,11 @@ import CodeStream from "textstreamjs";
             () => {
               cs.write(`${assertion}\n`);
             },
-            `, '${escape(`Assertion failure to the expression: "${assertion}"`, "'")}');\n`,
+            `, '${escape(`Assertion failure to the expression: "${assertion}"`, "'")}');\n`
           );
         }
       },
-      "})().catch(reason => {\n",
+      "})().catch(reason => {\n"
     );
     cs.indentBlock(() => {
       cs.write(`console.error(reason);\n`);
@@ -102,7 +102,7 @@ import CodeStream from "textstreamjs";
     await spawn("node", ["-e", code], { cwd: buildFolder }).wait();
 
     await spawn("npm", ["publish", "--access", "public"], {
-      cwd: buildFolder,
+      cwd: buildFolder
     }).wait();
   }
 })().catch((e) => {

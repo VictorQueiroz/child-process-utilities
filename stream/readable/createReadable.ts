@@ -1,34 +1,33 @@
 import { TextDecoder } from "util";
-import Exception from "./Exception";
-import errorToString from "./errorToString";
-import createSerializer from "./createSerializer";
+import Exception from "../../Exception";
+import errorToString from "../../errorToString";
+import createSerializer, { ISerializer } from "../../createSerializer";
 import { Readable } from "stream";
 
 /**
- * Interface representing the option types for `IReadableHelper`.
+ * Interface representing the option types for `IReadable`.
  * This can be extended to customize the expected return type for the `json()` method.
  */
-export interface IReadableHelperOptionTypes {
+export interface IReadableOptionTypes {
   json: unknown;
 }
 
 /**
- * Utility type to extract the type of the `json` property from `IReadableHelperOptionTypes`.
+ * Utility type to extract the type of the `json` property from `IReadableOptionTypes`.
  */
-type ReadableHelperOptionValue<T extends IReadableHelperOptionTypes> =
-  T extends {
-    json: infer U;
-  }
-    ? U
-    : never;
+type ReadableOptionValue<T extends IReadableOptionTypes> = T extends {
+  json: infer U;
+}
+  ? U
+  : never;
 
 /**
  * Helper interface for processing a `Readable` stream.
  * Provides methods to read, decode, parse, and iterate over the data from the stream.
  * @template T Option types to customize the helper behavior, such as the expected JSON type.
  */
-export interface IReadableHelper<
-  T extends IReadableHelperOptionTypes = IReadableHelperOptionTypes,
+export interface IReadable<
+  T extends IReadableOptionTypes = IReadableOptionTypes
 > {
   /**
    * Reads the entire stream and returns the concatenated data as a `Uint8Array`.
@@ -49,7 +48,7 @@ export interface IReadableHelper<
    * @returns {Promise<T>} A promise that resolves to the parsed JSON object.
    * @throws {Exception} Throws an exception if parsing fails, including the error message and the data.
    */
-  json<R = ReadableHelperOptionValue<T>>(): Promise<R>;
+  json<R = ReadableOptionValue<T>>(): Promise<R>;
   /**
    * Async generator function that splits the stream data using a delimiter and yields each part.
    * This function processes data chunk by chunk without caching the entire stream in memory.
@@ -66,18 +65,22 @@ export interface IReadableHelper<
   [Symbol.asyncIterator](): AsyncIterableIterator<Uint8Array>;
 }
 
+export interface ICreateReadableOptions {
+  readable: Readable;
+  serializer: ISerializer;
+}
+
 /**
  * Creates a helper object for a given `Readable` stream.
  * Provides utility methods to read, decode, parse, and iterate over the stream data.
  * @param {Readable | null} readable The `Readable` stream to process.
- * @returns {IReadableHelper} An object implementing the `IReadableHelper` interface.
+ * @returns {IReadable} An object implementing the `IReadable` interface.
  * @throws {Exception} Throws an exception if the `readable` argument is `null`.
  */
-export default function createReadableHelper(
-  readable: Readable,
-): IReadableHelper {
-  const serializer = createSerializer();
-
+export default function createReadable({
+  serializer,
+  readable
+}: ICreateReadableOptions): IReadable {
   /**
    * This promise will be resolved when the chunks have been concatenated.
    * This method caches the entire output in memory, but it does so in an
@@ -116,19 +119,21 @@ export default function createReadableHelper(
             .map((line) => `\t> ${line}`)
             .join("\n")}\n` +
           `Failed with error:\n\n` +
-          `\t> ${message}`,
+          `\t> ${message}`
       );
     }
   };
 
-  const split = async function* (delimiter: string): AsyncIterableIterator<string> {
+  const split = async function* (
+    delimiter: string
+  ): AsyncIterableIterator<string> {
     const decoder = new TextDecoder();
     let buffer = "";
 
     for await (const chunk of readable) {
-      if (!Buffer.isBuffer(chunk)) {
+      if (chunk && !Buffer.isBuffer(chunk)) {
         throw new Exception(
-          `Received a non-buffer chunk: ${chunk} (type: ${typeof chunk})`,
+          `Received a non-buffer chunk: ${chunk} (type: ${typeof chunk})`
         );
       }
 
@@ -153,13 +158,13 @@ export default function createReadableHelper(
     }
   };
 
-  async function* asyncIterator () {
+  async function* asyncIterator() {
     for await (const chunk of readable) {
       if (!Buffer.isBuffer(chunk)) {
         throw new Exception(
           `Received a non-buffer chunk: ${chunk} (type: ${typeof chunk}). ` +
             "This method is supposed to return a buffer. Maybe you changed the stream encoding? " +
-            "See: https://nodejs.org/api/stream.html#readablesetencodingencoding",
+            "See: https://nodejs.org/api/stream.html#readablesetencodingencoding"
         );
       }
       yield new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
@@ -171,6 +176,6 @@ export default function createReadableHelper(
     split,
     json,
     decode,
-    raw,
+    raw
   };
 }
